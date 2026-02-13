@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import Link from 'next/link';
 import { AppNavbar } from '@/components/chat/AppNavbar';
@@ -58,6 +58,11 @@ export default function ConversationsPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [submittingMessage, setSubmittingMessage] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const activeConversationIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -104,7 +109,7 @@ export default function ConversationsPage() {
     });
 
     socketClient.on('message:new', (payload: { conversationId: string; message: MessageItem }) => {
-      if (payload.conversationId === activeConversationId) {
+      if (payload.conversationId === activeConversationIdRef.current) {
         setMessages((prev) => [...prev, payload.message]);
       }
 
@@ -130,7 +135,14 @@ export default function ConversationsPage() {
       socketClient.disconnect();
       setSocket(null);
     };
-  }, [session?.pageId, activeConversationId]);
+  }, [session?.pageId]);
+
+  useEffect(() => {
+    // Khi pageId thay đổi -> reset để không giữ hội thoại của page trước đó
+    setActiveConversationId(null);
+    setMessages([]);
+    setMessagesError('');
+  }, [session?.pageId]);
 
   useEffect(() => {
     const loadConversations = async () => {
@@ -149,8 +161,13 @@ export default function ConversationsPage() {
           return;
         }
 
-        setConversations(data.data ?? []);
-        setActiveConversationId((prev) => prev ?? data.data?.[0]?.id ?? null);
+        const list = data.data ?? [];
+        setConversations(list);
+        setActiveConversationId((prev) => {
+          if (!prev) return list[0]?.id ?? null;
+          const stillExists = list.some((c: ConversationItem) => c.id === prev);
+          return stillExists ? prev : (list[0]?.id ?? null);
+        });
       } finally {
         setLoadingConversations(false);
       }

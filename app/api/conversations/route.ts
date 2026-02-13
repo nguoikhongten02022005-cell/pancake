@@ -35,7 +35,39 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const conversations = (fbData.data || []).map((item: {
+    const items = fbData.data || [];
+
+    const customerIds = items
+      .map((item: {
+        senders?: { data?: Array<{ id: string; name: string }> };
+      }) => {
+        const participants = item.senders?.data || [];
+        const customer = participants.find((p) => p.id !== selectedPageId) || participants[0];
+        return customer?.id;
+      })
+      .filter(Boolean) as string[];
+
+    let avatarMap: Record<string, { profile_pic?: string }> = {};
+
+    if (customerIds.length > 0) {
+      const ids = Array.from(new Set(customerIds)).slice(0, 200).join(',');
+      const picUrl = new URL(`https://graph.facebook.com/${FACEBOOK_API_VERSION}/`);
+      picUrl.searchParams.append('ids', ids);
+      picUrl.searchParams.append('fields', 'profile_pic');
+      picUrl.searchParams.append('access_token', pageAccessToken);
+
+      const picRes = await fetch(picUrl.toString(), {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+      const picData = await picRes.json();
+
+      if (picRes.ok && !picData.error) {
+        avatarMap = picData;
+      }
+    }
+
+    const conversations = items.map((item: {
       id: string;
       updated_time?: string;
       snippet?: string;
@@ -44,12 +76,15 @@ export async function GET(request: NextRequest) {
     }) => {
       const participants = item.senders?.data || [];
       const customer = participants.find((p) => p.id !== selectedPageId) || participants[0];
+      const customerId = customer?.id;
+      const avatar = customerId ? avatarMap?.[customerId]?.profile_pic : null;
       const unreadCount = Number(item.unread_count || 0);
 
       return {
         id: item.id,
+        customerId,
         customerName: customer?.name || 'Khách hàng Facebook',
-        customerAvatarUrl: null,
+        customerAvatarUrl: avatar || null,
         lastMessagePreview: item.snippet || null,
         status: unreadCount > 0 ? 'new' : 'in_progress',
         unreadCount,
