@@ -5,6 +5,11 @@ import { io, type Socket } from 'socket.io-client';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ConversationList } from '@/components/chat/ConversationList';
+import { ChatHeader } from '@/components/chat/ChatHeader';
+import { ChatMessage } from '@/components/chat/ChatMessage';
+import { ChatInput } from '@/components/chat/ChatInput';
+import { ChatSidebar } from '@/components/chat/ChatSidebar';
 
 type ConversationStatus = 'new' | 'in_progress' | 'done';
 
@@ -42,9 +47,11 @@ export default function ConversationsPage() {
   const [session, setSession] = useState<RealtimeSession | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [conversationsError, setConversationsError] = useState('');
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [messagesError, setMessagesError] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [messageText, setMessageText] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | ConversationStatus>('all');
@@ -128,10 +135,19 @@ export default function ConversationsPage() {
     const loadConversations = async () => {
       if (!session?.pageId) return;
       setLoadingConversations(true);
+      setConversationsError('');
       try {
         const query = statusFilter === 'all' ? '' : `?status=${statusFilter}`;
         const res = await fetch(`/api/conversations${query}`);
         const data = await res.json();
+
+        if (!res.ok) {
+          setConversations([]);
+          setActiveConversationId(null);
+          setConversationsError(data?.error || 'Không tải được hội thoại từ Facebook.');
+          return;
+        }
+
         setConversations(data.data ?? []);
 
         setActiveConversationId((prev) => prev ?? data.data?.[0]?.id ?? null);
@@ -148,9 +164,17 @@ export default function ConversationsPage() {
 
     const loadMessages = async () => {
       setLoadingMessages(true);
+      setMessagesError('');
       try {
         const res = await fetch(`/api/conversations/${activeConversationId}/messages`);
         const data = await res.json();
+
+        if (!res.ok) {
+          setMessages([]);
+          setMessagesError(data?.error || 'Không tải được tin nhắn.');
+          return;
+        }
+
         setMessages(data.data ?? []);
 
         socket?.emit('join:conversation', { conversationId: activeConversationId });
@@ -248,149 +272,105 @@ export default function ConversationsPage() {
               <option value="in_progress">Đang xử lý</option>
               <option value="done">Hoàn tất</option>
             </select>
+            {conversationsError ? <p className="mt-2 text-xs text-red-600">{conversationsError}</p> : null}
           </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {loadingConversations ? (
-              <p className="text-sm text-gray-500 p-4">Đang tải hội thoại...</p>
-            ) : filteredConversations.length === 0 ? (
-              <p className="text-sm text-gray-500 p-4">Chưa có hội thoại nào.</p>
-            ) : (
-              filteredConversations.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveConversationId(c.id)}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-blue-50 ${
-                    c.id === activeConversationId ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                      {c.customerAvatarUrl ? (
-                        <Image src={c.customerAvatarUrl} alt={c.customerName} width={40} height={40} className="w-full h-full object-cover" />
-                      ) : null}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium text-sm text-gray-900 truncate">{c.customerName}</p>
-                        {c.unreadCount > 0 ? (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600">{c.unreadCount}</span>
-                        ) : null}
-                      </div>
-                      <p className="text-xs text-gray-600 truncate">{c.lastMessagePreview ?? 'Không có nội dung'}</p>
-                      <div className="mt-1 flex items-center gap-1 flex-wrap">
-                        {c.tags.map((tag) => (
-                          <span
-                            key={tag.id}
-                            className="text-[10px] px-2 py-0.5 rounded-full text-white"
-                            style={{ backgroundColor: tag.color || '#64748b' }}
-                          >
-                            {tag.label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
+          {loadingConversations ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <ConversationList
+              conversations={conversations.map(c => ({
+                id: c.id,
+                name: c.customerName,
+                avatarUrl: c.customerAvatarUrl || undefined,
+                lastMessage: c.lastMessagePreview || 'Không có nội dung',
+                lastMessageTime: new Date(c.updatedAt).toLocaleDateString('vi-VN'),
+                unreadCount: c.unreadCount,
+                status: c.status === 'new' ? 'open' : c.status === 'in_progress' ? 'waiting' : 'closed'
+              }))}
+              selectedId={activeConversationId || undefined}
+              onSelect={setActiveConversationId}
+            />
+          )}
         </aside>
 
         <section className="col-span-6 bg-[#f7f7f7] flex flex-col">
-          <div className="h-14 border-b border-gray-200 bg-white px-4 flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-gray-900">{activeConversation?.customerName ?? 'Chọn hội thoại'}</p>
-              <p className="text-xs text-gray-500">Facebook Messenger</p>
-            </div>
-            {activeConversation ? (
-              <select
-                value={activeConversation.status}
-                onChange={(e) => updateStatus(e.target.value as ConversationStatus)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white"
-              >
-                <option value="new">Mới</option>
-                <option value="in_progress">Đang xử lý</option>
-                <option value="done">Hoàn tất</option>
-              </select>
-            ) : null}
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {!activeConversationId ? (
-              <p className="text-sm text-gray-500">Hãy chọn một hội thoại ở bên trái.</p>
-            ) : loadingMessages ? (
-              <p className="text-sm text-gray-500">Đang tải tin nhắn...</p>
-            ) : messages.length === 0 ? (
-              <p className="text-sm text-gray-500">Chưa có tin nhắn.</p>
-            ) : (
-              messages.map((m) => {
-                const isAgent = m.senderType === 'AGENT';
-                return (
-                  <div key={m.id} className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-                        isAgent ? 'bg-[#d8f8c9] text-gray-900' : 'bg-white text-gray-800 border border-gray-100'
-                      }`}
-                    >
-                      <p>{m.content}</p>
-                      <p className="text-[10px] text-gray-500 mt-1">{new Date(m.createdAt).toLocaleString('vi-VN')}</p>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          <div className="p-3 border-t border-gray-200 bg-white">
-            <div className="flex items-end gap-2">
-              <textarea
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Nhập phản hồi cho khách..."
-                className="flex-1 min-h-[42px] max-h-32 border border-gray-200 rounded-xl px-3 py-2 text-sm resize-y"
+          {activeConversationId ? (
+            <>
+              <ChatHeader
+                customerName={activeConversation?.customerName || 'Khách hàng'}
+                customerAvatarUrl={activeConversation?.customerAvatarUrl || undefined}
+                conversationId={activeConversationId}
+                status={activeConversation?.status === 'new' ? 'open' : activeConversation?.status === 'in_progress' ? 'waiting' : 'closed'}
+                onStatusChange={(status) => {
+                  const statusMap: Record<string, ConversationStatus> = {
+                    'open': 'new',
+                    'waiting': 'in_progress',
+                    'closed': 'done'
+                  };
+                  updateStatus(statusMap[status]);
+                }}
               />
-              <button
-                onClick={sendMessage}
-                disabled={submittingMessage || !activeConversationId}
-                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
-              >
-                Gửi
-              </button>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {loadingMessages ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+                    <p className="text-gray-600">Đang tải tin nhắn...</p>
+                  </div>
+                ) : messagesError ? (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{messagesError}</p>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                    <svg className="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <p className="text-sm">Chưa có tin nhắn</p>
+                  </div>
+                ) : (
+                  messages.map((m) => (
+                    <ChatMessage
+                      key={m.id}
+                      id={m.id}
+                      content={m.content}
+                      sender={m.senderType === 'AGENT' ? 'agent' : 'user'}
+                      timestamp={new Date(m.createdAt).toLocaleString('vi-VN')}
+                    />
+                  ))
+                )}
+              </div>
+
+              <ChatInput
+                value={messageText}
+                onChange={setMessageText}
+                onSend={sendMessage}
+                disabled={submittingMessage}
+              />
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
+              <svg className="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+              </svg>
+              <p className="text-sm">Chọn một hội thoại để bắt đầu</p>
             </div>
-          </div>
+          )}
         </section>
 
-        <aside className="col-span-3 border-l border-gray-200 bg-white p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Thông tin</h3>
-          {activeConversation ? (
-            <div className="space-y-3 text-sm">
-              <div>
-                <p className="text-gray-500">Khách hàng</p>
-                <p className="font-medium text-gray-900">{activeConversation.customerName}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Trạng thái</p>
-                <p className="font-medium text-gray-900">{activeConversation.status}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Cập nhật lần cuối</p>
-                <p className="font-medium text-gray-900">{new Date(activeConversation.updatedAt).toLocaleString('vi-VN')}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 mb-2">Tag</p>
-                <div className="flex flex-wrap gap-2">
-                  {activeConversation.tags.map((tag) => (
-                    <span key={tag.id} className="text-xs px-2 py-1 rounded-full text-white" style={{ backgroundColor: tag.color }}>
-                      {tag.label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500">Chưa chọn hội thoại.</p>
-          )}
+        <aside className="col-span-3 border-l border-gray-200 bg-white">
+          <ChatSidebar
+            customerInfo={activeConversation ? {
+              id: activeConversation.id,
+              name: activeConversation.customerName,
+              avatarUrl: activeConversation.customerAvatarUrl || undefined,
+              firstContactDate: new Date(activeConversation.updatedAt).toLocaleDateString('vi-VN'),
+              lastContactDate: new Date().toLocaleDateString('vi-VN')
+            } : undefined}
+          />
         </aside>
       </div>
     </div>

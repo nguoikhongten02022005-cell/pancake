@@ -1,0 +1,527 @@
+# Pancake Design System Rules
+
+## Overview
+This document defines the design system and component patterns for the Pancake Facebook inbox management application. It serves as the canonical reference for Figma-to-code integration using Model Context Protocol.
+
+---
+
+## 1. Token Definitions
+
+### Color System
+- **Primary**: `blue-600` (#2563eb) for primary actions, CTAs, and interactive elements
+- **Primary Hover**: `blue-700` (#1d4ed8)
+- **Background**: `white` (#ffffff) for main content areas
+- **Surface**: `gray-50` (#f9fafb) for secondary backgrounds
+- **Border**: `gray-200` (#e5e7eb) for dividers and outlines
+- **Text Primary**: `gray-900` (#111827) for headings and important text
+- **Text Secondary**: `gray-600` (#4b5563) for body text
+- **Text Tertiary**: `gray-500` (#6b7280) for supporting text
+- **Error**: `red-600` (#dc2626)
+- **Success**: `green-600` (#16a34a)
+
+### Typography
+- **Font Family**: Arial, Helvetica, sans-serif (system fonts)
+- **Heading 1**: `text-4xl font-bold` (36px)
+- **Heading 2**: `text-2xl font-bold` (24px)
+- **Heading 3**: `text-lg font-semibold` (18px)
+- **Body**: `text-sm` or `text-base` (14-16px)
+- **Caption**: `text-xs` (12px)
+
+### Spacing Scale
+- **xs**: `0.25rem` (4px)
+- **sm**: `0.5rem` (8px)
+- **md**: `1rem` (16px)
+- **lg**: `1.5rem` (24px)
+- **xl**: `2rem` (32px)
+- **2xl**: `3rem` (48px)
+
+### Border Radius
+- **sm**: `rounded-md` (6px)
+- **md**: `rounded-lg` (8px)
+- **lg**: `rounded-xl` (12px)
+- **xl**: `rounded-2xl` (16px)
+- **full**: `rounded-full` (pill shape)
+
+---
+
+## 2. Component Architecture
+
+### Component Structure
+```
+components/
+├── layout/          # Layout components (Navbar, Sidebar, etc.)
+├── chat/            # Chat-specific components
+├── ui/              # Reusable UI primitives
+└── [feature]/       # Feature-specific components
+```
+
+### Component Naming Convention
+- Use PascalCase for component names
+- Prefix feature-specific components: `[Feature][Component].tsx`
+  - Example: `ChatSidebar.tsx`, `ConversationList.tsx`
+
+### Component Props Pattern
+```typescript
+interface ComponentProps {
+  // Required props first
+  id: string;
+  title: string;
+
+  // Optional props with defaults
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+
+  // Event handlers
+  onClick?: () => void;
+  onChange?: (value: string) => void;
+
+  // Children
+  children?: React.ReactNode;
+}
+```
+
+---
+
+## 3. Frameworks & Libraries
+
+### Core Stack
+- **Framework**: Next.js 16.1.6 (App Router, Turbopack)
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4 (via PostCSS)
+- **State Management**: React Hooks (useState, useEffect, useMemo)
+- **Real-time**: Socket.IO 4.8.3
+
+### Styling Methodology
+- **Utility-first**: Tailwind CSS classes for all styling
+- **Responsive**: Mobile-first approach with `sm:`, `md:`, `lg:` breakpoints
+- **Dark Mode**: Not currently implemented (reserved for future)
+- **Custom CSS**: Minimal, only in `app/globals.css` for animations
+
+### Responsive Breakpoints
+- **Mobile**: Default (< 640px)
+- **Small**: `sm:` (≥ 640px)
+- **Medium**: `md:` (≥ 768px)
+- **Large**: `lg:` (≥ 1024px)
+- **XL**: `xl:` (≥ 1280px)
+
+---
+
+## 4. Asset Management
+
+### Images
+- **Storage**: `/public` directory
+- **Optimization**: Next.js `next/image` component
+- **Format**: Prefer WebP, fallback to JPEG/PNG
+- **Avatar URLs**: External URLs (e.g., i.pravatar.cc for test data)
+
+### Image Usage Pattern
+```typescript
+import Image from 'next/image';
+
+<Image
+  src={avatarUrl || '/default-avatar.png'}
+  alt={name}
+  width={40}
+  height={40}
+  className="w-full h-full object-cover rounded-full"
+/>
+```
+
+### CDN
+- Not currently configured (images served from public folder or external URLs)
+
+---
+
+## 5. Icon System
+
+### Icon Library
+- **Primary**: Inline SVG icons (Lucide-style)
+- **Alternative**: Emoji for simple UI elements
+
+### Icon Usage Pattern
+```typescript
+<svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="..." />
+</svg>
+```
+
+### Icon Sizes
+- **xs**: `w-3 h-3` (12px)
+- **sm**: `w-4 h-4` (16px)
+- **md**: `w-5 h-5` (20px) - default
+- **lg**: `w-6 h-6` (24px)
+- **xl**: `w-8 h-8` (32px)
+
+---
+
+## 6. Styling Approach
+
+### CSS Methodology
+- **Tailwind CSS**: Utility-first approach
+- **No CSS Modules**: All styling via Tailwind classes
+- **Global Styles**: Only in `app/globals.css`
+- **Component Styles**: Inline via className prop
+
+### Common Patterns
+
+#### Button Styles
+```typescript
+// Primary Button
+className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium transition-colors"
+
+// Secondary Button
+className="px-6 py-3 bg-white border border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50 font-medium transition-colors"
+
+// Ghost Button
+className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
+```
+
+#### Input Styles
+```typescript
+className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-500"
+```
+
+#### Card Styles
+```typescript
+className="rounded-lg border border-gray-200 bg-white shadow-sm"
+```
+
+#### Avatar Styles
+```typescript
+className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden"
+```
+
+### Layout Patterns
+
+#### Flex Layouts
+```typescript
+// Horizontal center
+className="flex items-center justify-center"
+
+// Space between
+className="flex items-center justify-between"
+
+// Vertical stack
+className="flex flex-col gap-4"
+```
+
+#### Grid Layouts
+```typescript
+// 3-column responsive grid
+className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+```
+
+---
+
+## 7. Project Structure
+
+### App Router Structure
+```
+app/
+├── (marketing)/          # Public marketing pages
+│   ├── page.tsx          # Landing page
+│   ├── login/
+│   └── ...
+├── (app)/                # Authenticated app pages
+│   ├── dashboard/
+│   ├── conversations/
+│   └── ...
+├── api/                  # API routes
+│   ├── auth/
+│   ├── conversations/
+│   └── realtime/
+└── layout.tsx            # Root layout
+```
+
+### Feature Organization
+Each feature follows this pattern:
+```
+[feature]/
+├── page.tsx              # Main page component
+├── components/           # Feature-specific components
+│   ├── [Feature]Sidebar.tsx
+│   ├── [Feature]List.tsx
+│   └── [Feature]Detail.tsx
+└── api/                  # Feature API routes (if any)
+```
+
+---
+
+## 8. Chat UI Specific Patterns
+
+### Conversation List Item
+```typescript
+<div className="w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-blue-50">
+  <div className="flex items-start gap-3">
+    {/* Avatar */}
+    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
+      <Image src={avatarUrl} alt={name} width={40} height={40} className="w-full h-full object-cover" />
+    </div>
+
+    {/* Content */}
+    <div className="min-w-0 flex-1">
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-medium text-sm text-gray-900 truncate">{name}</p>
+        {unreadCount > 0 && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-600">{unreadCount}</span>
+        )}
+      </div>
+      <p className="text-xs text-gray-600 truncate">{lastMessagePreview}</p>
+    </div>
+  </div>
+</div>
+```
+
+### Message Bubble
+```typescript
+<div className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
+  <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
+    isAgent
+      ? 'bg-[#d8f8c9] text-gray-900'
+      : 'bg-white text-gray-800 border border-gray-100'
+  }`}>
+    <p>{content}</p>
+    <p className="text-[10px] text-gray-500 mt-1">{timestamp}</p>
+  </div>
+</div>
+```
+
+### Chat Input Area
+```typescript
+<div className="p-3 border-t border-gray-200 bg-white">
+  <div className="flex items-end gap-2">
+    <textarea
+      value={messageText}
+      onChange={(e) => setMessageText(e.target.value)}
+      placeholder="Nhập phản hồi cho khách..."
+      className="flex-1 min-h-[42px] max-h-32 border border-gray-200 rounded-xl px-3 py-2 text-sm resize-y"
+    />
+    <button
+      onClick={sendMessage}
+      className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700"
+    >
+      Gửi
+    </button>
+  </div>
+</div>
+```
+
+---
+
+## 9. Page Layout Patterns
+
+### Standard Page Layout
+```typescript
+<div className="min-h-screen bg-[#f6f8fb]">
+  <Navbar />
+
+  <div className="pt-16 h-full grid grid-cols-12">
+    {/* Left Sidebar */}
+    <aside className="col-span-3 border-r border-gray-200 bg-white flex flex-col">
+      {/* Sidebar content */}
+    </aside>
+
+    {/* Main Content */}
+    <section className="col-span-6 bg-[#f7f7f7] flex flex-col">
+      {/* Main content */}
+    </section>
+
+    {/* Right Sidebar */}
+    <aside className="col-span-3 border-l border-gray-200 bg-white p-4">
+      {/* Right sidebar content */}
+    </aside>
+  </div>
+</div>
+```
+
+### Minimal Page Layout (No Navbar)
+```typescript
+<div className="min-h-screen bg-gray-100">
+  <div className="border-b border-gray-200 bg-white">
+    <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="text-base font-semibold text-gray-900">Pancake</div>
+      <div className="text-sm text-gray-500">Page Title</div>
+    </div>
+  </div>
+
+  <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    {/* Page content */}
+  </div>
+</div>
+```
+
+---
+
+## 10. State Management Patterns
+
+### Local State with useState
+```typescript
+const [conversations, setConversations] = useState<ConversationItem[]>([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState('');
+```
+
+### Derived State with useMemo
+```typescript
+const filteredConversations = useMemo(() => {
+  return conversations.filter(c => c.status === statusFilter);
+}, [conversations, statusFilter]);
+```
+
+### Side Effects with useEffect
+```typescript
+useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setData(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [dependency]);
+```
+
+---
+
+## 11. Error Handling Patterns
+
+### API Error Handling
+```typescript
+try {
+  const res = await fetch('/api/data');
+  const data = await res.json();
+
+  if (!res.ok) {
+    setError(data?.error || 'Failed to fetch data');
+    return;
+  }
+
+  setData(data.data);
+} catch (err) {
+  setError('Internal server error');
+  console.error('Fetch error:', err);
+}
+```
+
+### Error Display in UI
+```typescript
+{error && (
+  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+    <p className="text-sm text-red-800">{error}</p>
+  </div>
+)}
+```
+
+---
+
+## 12. Loading States
+
+### Loading Spinner
+```typescript
+<div className="flex flex-col items-center justify-center py-20">
+  <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+  <p className="text-gray-600">Đang tải...</p>
+</div>
+```
+
+### Skeleton Loading
+```typescript
+<div className="animate-pulse bg-gray-200 rounded h-4 w-full"></div>
+```
+
+---
+
+## 13. Accessibility
+
+### Semantic HTML
+- Use proper heading hierarchy (h1, h2, h3)
+- Use `<button>` for actions, `<a>` for navigation
+- Use `<label>` with form inputs
+
+### ARIA Attributes
+```typescript
+<button
+  aria-label="Close"
+  onClick={onClose}
+>
+  <svg>...</svg>
+</button>
+```
+
+### Keyboard Navigation
+- Ensure all interactive elements are keyboard accessible
+- Provide visible focus states
+```typescript
+className="focus:outline-none focus:ring-2 focus:ring-blue-500"
+```
+
+---
+
+## 14. Figma Integration Guidelines
+
+### When Converting Figma to Code
+
+1. **Match Colors**: Use Tailwind color equivalents
+   - Figma hex → Tailwind color (e.g., #2563eb → blue-600)
+
+2. **Typography**: Map Figma styles to Tailwind
+   - Font size: 16px → text-base
+   - Font weight: 600 → font-semibold
+
+3. **Spacing**: Convert Figma spacing to Tailwind scale
+   - 8px → gap-2 or p-2
+   - 16px → gap-4 or p-4
+
+4. **Components**: Extract reusable components from Figma
+   - Identify repeated patterns (buttons, cards, inputs)
+   - Create component variants where needed
+
+5. **Responsive**: Adapt Figma desktop designs for mobile
+   - Use `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
+   - Stack vertically on mobile, side-by-side on desktop
+
+### Component Mapping Examples
+
+| Figma Element | Tailwind Classes |
+|--------------|------------------|
+| Primary Button | `px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700` |
+| Input Field | `border border-gray-300 rounded-xl px-4 py-3 text-sm` |
+| Card | `rounded-lg border border-gray-200 bg-white shadow-sm` |
+| Avatar | `w-10 h-10 rounded-full bg-gray-100` |
+| Badge | `text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700` |
+
+---
+
+## 15. Testing & Validation
+
+### Build Validation
+Always run `npm run build` after significant changes to ensure:
+- TypeScript compilation succeeds
+- No import/export errors
+- Tailwind CSS classes are valid
+
+### Component Checklist
+- [ ] Uses TypeScript interfaces for props
+- [ ] Handles loading states
+- [ ] Handles error states
+- [ ] Responsive on mobile/tablet/desktop
+- [ ] Accessible (keyboard navigation, ARIA labels)
+- [ ] Follows design system tokens
+
+---
+
+## Summary
+
+This design system ensures consistency across the Pancake application and provides clear guidelines for integrating Figma designs into code. All components should follow these patterns to maintain a cohesive user experience.
+
+For questions or updates to this document, consult the team lead or update this file directly.
