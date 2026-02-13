@@ -298,7 +298,7 @@ export default function ConversationsPage() {
         </div>
 
         {/* Chat area */}
-        <div className="flex-1 flex flex-col bg-[#e5ddd5]">
+        <div className="flex-1 flex flex-col bg-[#e4dfda]">
           {activeConversationId ? (
             <>
               <ChatHeader
@@ -367,7 +367,7 @@ export default function ConversationsPage() {
         </div>
 
         {/* Right sidebar - customer info */}
-        <div className="w-[280px] border-l border-gray-200 shrink-0">
+        <div className="w-[320px] border-l border-[#d9dce3] shrink-0">
           <ChatSidebar
             customerInfo={activeConversation ? {
               id: activeConversation.id,
