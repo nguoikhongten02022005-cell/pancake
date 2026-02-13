@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
 function LoginContent() {
@@ -37,135 +36,116 @@ function LoginContent() {
 
   const handleFacebookLogin = () => {
     setIsLoading(true);
-    // Redirect to Facebook OAuth authorize endpoint
     router.push('/api/auth/facebook/authorize');
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Navbar />
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+  };
 
-      <div className="flex items-center justify-center min-h-screen px-4">
-        <div className="w-full max-w-md">
-          {/* Login Card */}
-          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
-            {/* Logo */}
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <span className="text-4xl">🍰</span>
-                <span className="text-3xl font-bold text-gray-900">Pancake</span>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Chào mừng trở lại!
-              </h2>
-              <p className="text-gray-600">
-                Đăng nhập để tiếp tục quản lý hội thoại của bạn
-              </p>
+  return (
+    <div className="min-h-screen bg-[#f7f9fc] text-[#1f2a37]">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        <aside className="hidden lg:flex flex-col justify-between bg-[#eaf6f4] p-10 xl:p-14 border-r border-[#e3ecef]">
+          <div className="flex items-center gap-2">
+            <span className="text-3xl">🍰</span>
+            <span className="text-4xl font-bold tracking-tight">Pancake</span>
+          </div>
+
+          <div>
+            <h2 className="text-4xl font-semibold mb-5">Start now ✨</h2>
+            <p className="text-lg text-[#516072] mb-6">Free trial - begin smart and efficient customer care</p>
+            <ul className="space-y-4 text-[22px] leading-tight font-medium">
+              <li>✅ Centralized, efficient multi-platform conversation management</li>
+              <li>✅ Automated customer care and order closing with AI Agent</li>
+              <li>✅ Order management and automated ad optimization with CAPI</li>
+              <li>✅ Omnichannel customer management with CRM</li>
+              <li>✅ Landing page design - Website</li>
+            </ul>
+          </div>
+
+          <p className="text-sm text-[#667788]">© 2026 Pancake</p>
+        </aside>
+
+        <main className="flex items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-[540px] rounded-2xl bg-white border border-[#e5eaf1] p-7 sm:p-9 shadow-sm">
+            <div className="flex items-start justify-between mb-8">
+              <h1 className="text-[40px] font-semibold leading-none tracking-tight">Login or Register</h1>
+              <button className="w-9 h-9 rounded-full border border-[#dde4ec] text-xs">🇺🇸</button>
+            </div>
+
+            <div className="mb-7 flex gap-6 border-b border-[#e5eaf1]">
+              <button className="pb-3 text-[#2563eb] font-semibold border-b-2 border-[#2563eb]">Login</button>
+              <button className="pb-3 text-[#5d6b7c] hover:text-[#2563eb]">Register</button>
             </div>
 
             {errorMessage && (
-              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {errorMessage}
               </div>
             )}
 
-            {/* Facebook Login Button */}
-            <button
-              onClick={handleFacebookLogin}
-              disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-3 bg-[#1877F2] hover:bg-[#166FE5] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Đang xử lý...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                  <span>Đăng nhập với Facebook</span>
-                </>
-              )}
-            </button>
-
-            {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">hoặc</span>
-              </div>
-            </div>
-
-            {/* Email Login Form */}
-            <form className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="email@example.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Mật khẩu
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="flex items-center">
-                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                  <span className="ml-2 text-sm text-gray-600">Ghi nhớ đăng nhập</span>
-                </label>
-                <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
-                  Quên mật khẩu?
-                </Link>
-              </div>
+            <form className="space-y-4" onSubmit={handleEmailSubmit}>
+              <input
+                type="text"
+                className="w-full h-12 rounded-xl border border-[#d7dee8] px-4 text-[17px] outline-none focus:border-[#2563eb]"
+                placeholder="Email/Phone Number/Username"
+              />
+              <input
+                type="password"
+                className="w-full h-12 rounded-xl border border-[#d7dee8] px-4 text-[17px] outline-none focus:border-[#2563eb]"
+                placeholder="Your password"
+              />
+              <Link href="/forgot-password" className="inline-block text-[#2563eb] text-sm hover:underline">
+                Forgot Password
+              </Link>
 
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                className="mt-2 w-full h-12 rounded-full bg-[#8da0bf] text-white text-2xl font-medium"
               >
-                Đăng nhập
+                Login
               </button>
             </form>
 
-            {/* Sign up link */}
-            <p className="text-center mt-6 text-gray-600">
-              Chưa có tài khoản?{' '}
-              <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold">
-                Đăng ký ngay
-              </Link>
-            </p>
-          </div>
+            <div className="my-5 flex items-center gap-4 text-[#8a97a8] text-sm">
+              <div className="h-px flex-1 bg-[#e5eaf1]" />
+              <span>You can also use</span>
+              <div className="h-px flex-1 bg-[#e5eaf1]" />
+            </div>
 
-          {/* Back to home */}
-          <div className="text-center mt-6">
-            <Link href="/" className="text-gray-600 hover:text-gray-900 flex items-center justify-center">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Quay lại trang chủ
-            </Link>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                onClick={handleFacebookLogin}
+                disabled={isLoading}
+                className="h-11 rounded-xl bg-[#1877F2] text-white font-semibold hover:bg-[#166FE5] disabled:opacity-75"
+              >
+                {isLoading ? 'Đang xử lý...' : 'Facebook'}
+              </button>
+              <button type="button" className="h-11 rounded-xl border border-[#d7dee8] bg-[#f7f9fc] text-[#2b3441] font-semibold">
+                Google
+              </button>
+              <button type="button" className="h-11 rounded-xl border border-[#d7dee8] bg-[#f7f9fc] text-[#2b3441] font-semibold">
+                Apple
+              </button>
+            </div>
+
+            <p className="mt-6 text-sm text-[#6f7d8f]">
+              By continuing, you agree to our{' '}
+              <Link href="/privacy-policy" className="text-[#2563eb] hover:underline">
+                Terms and Policies
+              </Link>
+              .
+            </p>
+
+            <div className="mt-7 pt-5 border-t border-[#e5eaf1] text-center text-sm text-[#6f7d8f]">
+              Copyright © 2026 Pancake ·{' '}
+              <Link href="/privacy-policy" className="text-[#2563eb] hover:underline">
+                Privacy Policy
+              </Link>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
@@ -175,9 +155,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-          <Navbar />
-          <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="min-h-screen bg-[#f7f9fc] flex items-center justify-center">
+          <div className="w-full max-w-[540px] rounded-2xl bg-white border border-[#e5eaf1] p-9 shadow-sm flex items-center justify-center">
             <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
           </div>
         </div>
