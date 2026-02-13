@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '@/lib/prisma';
 import { USER_COOKIE_KEY } from '@/lib/auth';
 
 const FACEBOOK_APP_ID = process.env.FACEBOOK_APP_ID || 'YOUR_FACEBOOK_APP_ID';
@@ -87,49 +86,31 @@ export async function GET(request: NextRequest) {
     const userResponse = await fetch(userUrl.toString());
     const userData = await userResponse.json();
 
-    const user = await prisma.user.upsert({
-      where: {
-        facebookId: userData.id,
-      },
-      update: {
-        name: userData.name,
-        email: userData.email ?? null,
-        avatarUrl: userData.picture?.data?.url ?? null,
-      },
-      create: {
-        facebookId: userData.id,
-        name: userData.name,
-        email: userData.email ?? null,
-        avatarUrl: userData.picture?.data?.url ?? null,
-      },
-    });
+    // Tạo user ID từ Facebook ID (không cần database)
+    const userId = `fb_${userData.id}`;
 
-    // Lưu user access token và user info vào session/cookie
+    // Lưu user access token và user info vào cookie
     const response = NextResponse.redirect(
       appUrl('/auth/facebook/pages')
     );
 
-    // Lưu vào cookies (trong thực tế nên dùng database hoặc session)
-    response.cookies.set('user_access_token', userAccessToken, {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 3600, // 1 giờ
-    });
+      sameSite: 'lax' as const,
+      maxAge: 86400, // 24 giờ
+    };
 
-    response.cookies.set('user_info', JSON.stringify(userData), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 3600,
-    });
+    response.cookies.set('user_access_token', userAccessToken, cookieOptions);
 
-    response.cookies.set(USER_COOKIE_KEY, user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 86400,
-    });
+    response.cookies.set('user_info', JSON.stringify({
+      id: userData.id,
+      name: userData.name,
+      email: userData.email ?? null,
+      avatarUrl: userData.picture?.data?.url ?? null,
+    }), cookieOptions);
+
+    response.cookies.set(USER_COOKIE_KEY, userId, cookieOptions);
 
     // Xóa state cookie
     response.cookies.delete('oauth_state');

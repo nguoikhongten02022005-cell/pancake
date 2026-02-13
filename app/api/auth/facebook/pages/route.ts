@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
 const FACEBOOK_API_VERSION = process.env.FACEBOOK_API_VERSION || 'v22.0';
@@ -75,44 +74,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const page = await prisma.facebookPage.upsert({
-      where: { facebookPageId: pageId },
-      update: {
-        name: pageName ?? 'Facebook Page',
-        category: pageCategory ?? null,
-        pictureUrl: pagePictureUrl ?? null,
-        pageAccessToken,
-        userId: user.id,
-      },
-      create: {
-        facebookPageId: pageId,
-        name: pageName ?? 'Facebook Page',
-        category: pageCategory ?? null,
-        pictureUrl: pagePictureUrl ?? null,
-        pageAccessToken,
-        userId: user.id,
-      },
-    });
+    // Lưu page info vào cookies (không cần database)
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: 86400, // 24 giờ
+    };
 
-    // Lưu page access token vào session/cookie
     const response = NextResponse.json({
       success: true,
       message: 'Page connected successfully',
     });
 
-    response.cookies.set('selected_page_id', page.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 86400, // 24 giờ
-    });
+    response.cookies.set('selected_page_id', pageId, cookieOptions);
 
-    response.cookies.set('selected_page_token', pageAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 86400,
-    });
+    response.cookies.set('selected_page_token', pageAccessToken, cookieOptions);
+
+    response.cookies.set('selected_page_info', JSON.stringify({
+      id: pageId,
+      name: pageName ?? 'Facebook Page',
+      category: pageCategory ?? null,
+      pictureUrl: pagePictureUrl ?? null,
+    }), cookieOptions);
 
     return response;
   } catch (error) {
