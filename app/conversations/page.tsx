@@ -204,14 +204,6 @@ export default function ConversationsPage() {
     setConversations((prev) => prev.map((c) => (c.id === data.data.id ? data.data : c)));
   };
 
-  const createMockData = async () => {
-    await fetch('/api/conversations/seed', { method: 'POST' });
-    const res = await fetch('/api/conversations');
-    const data = await res.json();
-    setConversations(data.data ?? []);
-    if (data.data?.[0]) setActiveConversationId(data.data[0].id);
-  };
-
   if (loadingSession) {
     return (
       <div className="min-h-screen grid place-items-center">
@@ -244,9 +236,7 @@ export default function ConversationsPage() {
           <div className="p-3 border-b border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-gray-900">Hội thoại</h2>
-              <button onClick={createMockData} className="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
-                Tạo dữ liệu mẫu
-              </button>
+              <span className="text-xs text-gray-500">Dữ liệu lấy từ Facebook Page đã kết nối</span>
             </div>
             <select
               value={statusFilter}

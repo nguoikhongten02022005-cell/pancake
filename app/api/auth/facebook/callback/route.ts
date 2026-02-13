@@ -9,18 +9,25 @@ const APP_ORIGIN = process.env.APP_ORIGIN || 'http://localhost:3000';
 const REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI || `${APP_ORIGIN}/api/auth/facebook/callback`;
 const FACEBOOK_API_VERSION = process.env.FACEBOOK_API_VERSION || 'v22.0';
 
+function isPlaceholderValue(value: string | undefined) {
+  if (!value) return true;
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.length === 0 ||
+    normalized.startsWith('your_') ||
+    normalized.startsWith('paste_') ||
+    normalized.includes('your_facebook_') ||
+    normalized.includes('paste_your_')
+  );
+}
+
 function appUrl(path: string) {
   return new URL(path, APP_ORIGIN);
 }
 
 export async function GET(request: NextRequest) {
   try {
-    if (
-      !FACEBOOK_APP_ID ||
-      !FACEBOOK_APP_SECRET ||
-      FACEBOOK_APP_ID === 'YOUR_FACEBOOK_APP_ID' ||
-      FACEBOOK_APP_SECRET === 'YOUR_FACEBOOK_APP_SECRET'
-    ) {
+    if (isPlaceholderValue(FACEBOOK_APP_ID) || isPlaceholderValue(FACEBOOK_APP_SECRET)) {
       return NextResponse.redirect(appUrl('/login?error=missing_facebook_config'));
     }
 
@@ -64,8 +71,9 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok || tokenData.error) {
       console.error('Facebook token exchange error:', tokenData);
+      const errorMessage = tokenData?.error?.message ?? 'Token exchange failed';
       return NextResponse.redirect(
-        appUrl('/login?error=token_exchange_failed')
+        appUrl(`/login?error=token_exchange_failed&description=${encodeURIComponent(errorMessage)}`)
       );
     }
 

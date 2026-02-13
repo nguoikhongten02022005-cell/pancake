@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('state', state);
+    authUrl.searchParams.append('override_default_response_type', 'true');
 
     // Facebook Login for Business bắt buộc: dùng Login Configuration (config_id)
     authUrl.searchParams.append('config_id', FACEBOOK_LOGIN_CONFIG_ID!);

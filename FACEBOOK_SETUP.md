@@ -58,7 +58,7 @@ FACEBOOK_LOGIN_CONFIG_ID=your_login_configuration_id
 ### Production
 - Các quyền page/messaging thường cần **Advanced Access** + **App Review**.
 - Chuẩn bị đầy đủ:
-  - Privacy Policy URL
+   - Privacy Policy URL (dùng ngay: `http://localhost:3000/privacy-policy`)
   - Terms of Service URL
   - Data Deletion Instructions URL
   - Video/screenshot mô tả luồng xin quyền đúng use case
@@ -71,6 +71,15 @@ FACEBOOK_LOGIN_CONFIG_ID=your_login_configuration_id
 4. Xác nhận callback nhận được `code` và tạo session thành công.
 5. Vào `/auth/facebook/pages`, kiểm tra lấy được danh sách page.
 6. Chạy lại các flow inbox/conversations để xác nhận token dùng ổn định.
+
+## 6.1) Cách xử lý nhanh nhất (để login chạy ngay)
+
+1. Kiểm tra `FACEBOOK_APP_ID` trong `.env.local` có đúng app bạn đang cấu hình trên Meta.
+2. Vào **Vai trò trong ứng dụng** và thêm tài khoản test vào `Admin`/`Developer`/`Tester`.
+3. Vào **Đăng nhập bằng Facebook** (hoặc **Facebook Login for Business**) → Cài đặt, thêm **Valid OAuth Redirect URI**:
+   - `http://localhost:3000/api/auth/facebook/callback`
+4. Đảm bảo app không ở trạng thái bị vô hiệu hoá/inactive.
+5. Khởi động lại app rồi thử login lại.
 
 ## 7) Troubleshooting
 

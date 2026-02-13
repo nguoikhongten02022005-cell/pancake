@@ -1,16 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
   const errorCode = searchParams.get('error');
+  const errorDescription = searchParams.get('description');
   const errorMessage = useMemo(() => {
     if (!errorCode) return null;
 
@@ -21,10 +22,12 @@ export default function LoginPage() {
         return 'Thiếu FACEBOOK_LOGIN_CONFIG_ID hợp lệ. Vui lòng cập nhật .env.local rồi khởi động lại app.';
       case 'invalid_state':
         return 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.';
+      case 'token_exchange_failed':
+        return `Facebook từ chối đổi token. ${errorDescription ? `Chi tiết: ${errorDescription}` : 'Vui lòng kiểm tra App Secret, Redirect URI và cấu hình app trong Meta.'}`;
       default:
         return 'Đăng nhập Facebook chưa thành công. Vui lòng thử lại.';
     }
-  }, [errorCode]);
+  }, [errorCode, errorDescription]);
 
   useEffect(() => {
     if (errorCode) {
@@ -165,5 +168,22 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+          <Navbar />
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+          </div>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

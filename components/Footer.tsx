@@ -21,7 +21,7 @@ export default function Footer() {
     ],
     company: [
       { name: 'Điều khoản sử dụng', href: '#' },
-      { name: 'Chính sách bảo mật', href: '#' },
+      { name: 'Chính sách bảo mật', href: '/privacy-policy' },
     ],
   };
 
