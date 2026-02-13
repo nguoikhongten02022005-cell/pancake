@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { emitToConversation, emitToRoom } from '@/lib/realtime';
 import { getCurrentUser } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
@@ -92,48 +90,69 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        page: {
-          userId: user.id,
-        },
-      },
-      include: {
-        page: true,
-      },
-    });
+    const cookieStore = await cookies();
+    const pageAccessToken = cookieStore.get('selected_page_token')?.value;
+    const selectedPageId = cookieStore.get('selected_page_id')?.value;
 
-    if (!conversation) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+    if (!pageAccessToken || !selectedPageId) {
+      return NextResponse.json({ error: 'Unauthorized - no page token' }, { status: 401 });
     }
 
-    const message = await prisma.message.create({
-      data: {
-        conversationId,
-        senderType: 'AGENT',
-        senderName: user.name,
-        content: parsed.data.content,
+    // First, get the conversation to find the recipient (the customer PSID)
+    const convoUrl = new URL(`https://graph.facebook.com/${FACEBOOK_API_VERSION}/${conversationId}`);
+    convoUrl.searchParams.append('access_token', pageAccessToken);
+    convoUrl.searchParams.append('fields', 'participants');
+
+    const convoRes = await fetch(convoUrl.toString(), { cache: 'no-store' });
+    const convoData = await convoRes.json();
+
+    if (!convoRes.ok || convoData.error) {
+      return NextResponse.json(
+        { error: convoData?.error?.message || 'Failed to get conversation participants' },
+        { status: 400 }
+      );
+    }
+
+    // Find the customer (participant who is NOT the page)
+    const participants = convoData.participants?.data || [];
+    const customer = participants.find((p: { id: string }) => p.id !== selectedPageId);
+
+    if (!customer) {
+      return NextResponse.json({ error: 'Could not find customer in conversation' }, { status: 400 });
+    }
+
+    // Send message via Facebook Send API
+    const sendUrl = `https://graph.facebook.com/${FACEBOOK_API_VERSION}/me/messages`;
+    const sendRes = await fetch(sendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        access_token: pageAccessToken,
+        recipient: { id: customer.id },
+        message: { text: parsed.data.content },
+        messaging_type: 'RESPONSE',
+      }),
     });
 
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: {
-        lastMessagePreview: parsed.data.content,
-        status: 'in_progress',
-        updatedAt: new Date(),
-      },
-    });
+    const sendData = await sendRes.json();
 
-    const payload = {
-      conversationId,
-      pageId: conversation.pageId,
-      message,
+    if (!sendRes.ok || sendData.error) {
+      return NextResponse.json(
+        { error: sendData?.error?.message || 'Failed to send message via Facebook' },
+        { status: 400 }
+      );
+    }
+
+    // Return the sent message in the expected format
+    const message = {
+      id: sendData.message_id || `sent_${Date.now()}`,
+      senderType: 'AGENT' as const,
+      senderName: user.name,
+      content: parsed.data.content,
+      createdAt: new Date().toISOString(),
     };
-
-    emitToConversation(conversationId, 'message:new', payload);
-    emitToRoom(`page:${conversation.pageId}`, 'conversation:updated', payload);
 
     return NextResponse.json({ success: true, data: message });
   } catch (error) {
