@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  facebookId    String          @unique
+  name          String
+  email         String?
+  avatarUrl     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  pages         FacebookPage[]
+  conversations Conversation[]
+}
+
+model FacebookPage {
+  id                 String         @id @default(cuid())
+  facebookPageId     String         @unique
+  name               String
+  category           String?
+  pictureUrl         String?
+  pageAccessToken    String
+  userId             String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversations      Conversation[]
+
+  @@index([userId])
+}
+
+model Conversation {
+  id                 String       @id @default(cuid())
+  facebookThreadId   String       @default("")
+  customerName       String
+  customerAvatarUrl  String?
+  lastMessagePreview String?
+  status             String       @default("new")
+  unreadCount        Int          @default(0)
+  pageId             String
+  assigneeId         String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  page               FacebookPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  assignee           User?        @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  messages           Message[]
+  tags               ConversationTag[]
+
+  @@index([pageId])
+  @@index([updatedAt])
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String
+  senderType     SenderType
+  senderName     String
+  content        String
+  createdAt      DateTime      @default(now())
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model ConversationTag {
+  id             String        @id @default(cuid())
+  conversationId String
+  label          String
+  color          String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+enum SenderType {
+  CUSTOMER
+  AGENT
+}
