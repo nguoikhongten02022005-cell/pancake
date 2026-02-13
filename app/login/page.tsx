@@ -39,10 +39,6 @@ function LoginContent() {
     router.push('/api/auth/facebook/authorize');
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
-
   return (
     <div className="min-h-screen bg-[#f7f9fc] text-[#1f2a37]">
       <div className="grid min-h-screen lg:grid-cols-2">
@@ -76,7 +72,6 @@ function LoginContent() {
 
             <div className="mb-7 flex gap-6 border-b border-[#e5eaf1]">
               <button className="pb-3 text-[#2563eb] font-semibold border-b-2 border-[#2563eb]">Login</button>
-              <button className="pb-3 text-[#5d6b7c] hover:text-[#2563eb]">Register</button>
             </div>
 
             {errorMessage && (
@@ -85,48 +80,17 @@ function LoginContent() {
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleEmailSubmit}>
-              <input
-                type="text"
-                className="w-full h-12 rounded-xl border border-[#d7dee8] px-4 text-[17px] outline-none focus:border-[#2563eb]"
-                placeholder="Email/Phone Number/Username"
-              />
-              <input
-                type="password"
-                className="w-full h-12 rounded-xl border border-[#d7dee8] px-4 text-[17px] outline-none focus:border-[#2563eb]"
-                placeholder="Your password"
-              />
-              <Link href="/forgot-password" className="inline-block text-[#2563eb] text-sm hover:underline">
-                Forgot Password
-              </Link>
+            <p className="mb-6 text-[#5f6e81]">
+              Đăng nhập nhanh bằng Facebook để kết nối Page và quản lý hội thoại.
+            </p>
 
-              <button
-                type="submit"
-                className="mt-2 w-full h-12 rounded-full bg-[#8da0bf] text-white text-2xl font-medium"
-              >
-                Login
-              </button>
-            </form>
-
-            <div className="my-5 flex items-center gap-4 text-[#8a97a8] text-sm">
-              <div className="h-px flex-1 bg-[#e5eaf1]" />
-              <span>You can also use</span>
-              <div className="h-px flex-1 bg-[#e5eaf1]" />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <button
                 onClick={handleFacebookLogin}
                 disabled={isLoading}
-                className="h-11 rounded-xl bg-[#1877F2] text-white font-semibold hover:bg-[#166FE5] disabled:opacity-75"
+                className="h-12 rounded-xl bg-[#1877F2] text-white text-lg font-semibold hover:bg-[#166FE5] disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Đang xử lý...' : 'Facebook'}
-              </button>
-              <button type="button" className="h-11 rounded-xl border border-[#d7dee8] bg-[#f7f9fc] text-[#2b3441] font-semibold">
-                Google
-              </button>
-              <button type="button" className="h-11 rounded-xl border border-[#d7dee8] bg-[#f7f9fc] text-[#2b3441] font-semibold">
-                Apple
               </button>
             </div>
 
