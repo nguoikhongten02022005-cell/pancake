@@ -13,23 +13,11 @@ export function ChatHeader({
   status = 'open',
   onStatusChange
 }: ChatHeaderProps) {
-  const statusColors = {
-    open: 'bg-green-100 text-green-700',
-    closed: 'bg-gray-100 text-gray-700',
-    waiting: 'bg-yellow-100 text-yellow-700'
-  };
-
-  const statusLabels = {
-    open: 'Đang xử lý',
-    closed: 'Đã đóng',
-    waiting: 'Chờ xử lý'
-  };
-
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-white">
       {/* Customer Info */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0">
+        <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden shrink-0">
           {customerAvatarUrl ? (
             <img src={customerAvatarUrl} alt={customerName} className="w-full h-full object-cover" />
           ) : (
@@ -39,28 +27,32 @@ export function ChatHeader({
           )}
         </div>
         <div>
-          <h3 className="font-semibold text-sm text-gray-900">{customerName}</h3>
+          <h3 className="font-medium text-[14px] text-gray-900">{customerName}</h3>
           {conversationId && (
-            <p className="text-xs text-gray-500">ID: {conversationId}</p>
+            <p className="text-[11px] text-gray-400">ID: {conversationId.length > 20 ? conversationId.substring(0, 20) + '...' : conversationId}</p>
           )}
         </div>
       </div>
 
-      {/* Status */}
+      {/* Status dropdown */}
       <div className="flex items-center gap-2">
         {onStatusChange ? (
           <select
             value={status}
-            onChange={(e) => onStatusChange(e.target.value as any)}
-            className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 outline-none focus:border-blue-500 cursor-pointer"
+            onChange={(e) => onStatusChange(e.target.value as 'open' | 'closed' | 'waiting')}
+            className="text-[12px] px-2 py-1 rounded border border-gray-200 outline-none focus:border-blue-400 cursor-pointer bg-white text-gray-600"
           >
             <option value="open">Đang xử lý</option>
             <option value="waiting">Chờ xử lý</option>
             <option value="closed">Đã đóng</option>
           </select>
         ) : (
-          <span className={`text-xs px-3 py-1.5 rounded-lg ${statusColors[status]}`}>
-            {statusLabels[status]}
+          <span className={`text-[12px] px-2 py-1 rounded ${
+            status === 'open' ? 'bg-green-50 text-green-600' :
+            status === 'waiting' ? 'bg-yellow-50 text-yellow-600' :
+            'bg-gray-50 text-gray-600'
+          }`}>
+            {status === 'open' ? 'Đang xử lý' : status === 'waiting' ? 'Chờ xử lý' : 'Đã đóng'}
           </span>
         )}
       </div>
